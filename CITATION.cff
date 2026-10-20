@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+title: "Digital Control of a DC Motor on the TI LAUNCHXL-F28379D"
+type: software
+authors:
+  - family-names: Gallo
+    given-names: Andrea
+  - family-names: Ragazzini
+    given-names: Vittorio
+  - family-names: Lodolini
+    given-names: Leonardo
+date-released: 2026-06-15
+license: MIT
+repository-code: "https://github.com/andreagallo-dev/LAS-DC-Motor-Control"
+keywords:
+  - DC motor
+  - digital control
+  - deadbeat
+  - Dahlin
+  - least squares
+  - Simulink
+  - C2000

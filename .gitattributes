@@ -1,0 +1,11 @@
+# Binary MATLAB/Simulink files: never merge or diff as text
+*.slx  binary
+*.mdl  -text
+*.mat  binary
+*.fig  binary
+*.mlx  binary
+*.pdf  binary
+*.png  binary
+
+# MATLAB source
+*.m    text diff=matlab

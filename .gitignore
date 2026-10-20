@@ -1,0 +1,31 @@
+# Simulink build artifacts and caches
+slprj/
+*_ert_rtw/
+*_grt_rtw/
+*_rtw/
+codegen/
+*.slxc
+*.mexa64
+*.mexw64
+*.mexmaci64
+
+# C2000 / Code Composer Studio outputs
+*.hex
+*.out
+*.dwo
+*.obj
+*.map
+*.d
+
+# MATLAB/Simulink autosave and backup files
+*.asv
+*.autosave
+*.slx.r20*
+*.mdl.r20*
+*.bak
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
