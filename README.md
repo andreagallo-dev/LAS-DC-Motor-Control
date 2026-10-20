@@ -77,20 +77,30 @@ At 1500 rpm the encoder produces only about 20 counts per sample, so **a single 
 ```mermaid
 flowchart LR
     REF(["ω_ref"]) --> E1(("Σ"))
-    E1 --> SPI["Speed controller<br/>PI · Deadbeat · Dahlin"]
-    SPI --> SAT1["Current<br/>saturation"]
-    FF["Feedforward<br/>J·ω̇_d / k_m"] --> E2
-    SAT1 --> E2(("Σ"))
-    E2 --> CPI["Current PI<br/>τ_i = 1 ms"]
-    CPI --> E3(("+"))
-    BEMF["Back-EMF comp.<br/>k_m·ω"] --> E3
-    E3 --> SAT2["Voltage saturation<br/>± V_dc"]
-    SAT2 --> PWM["PWM<br/>10 kHz"]
-    PWM --> MOT[["DC motor + load"]]
+
+    subgraph OUTER["Outer loop · speed"]
+        E1 --> SPI["Speed controller<br/><b>PI · Deadbeat · Dahlin</b>"]
+        SPI --> SAT1["Current limit<br/>+ anti-windup"]
+    end
+
+    subgraph INNER["Inner loop · current · τ_i = 1 ms"]
+        E2(("Σ")) --> CPI["Current PI"]
+        CPI --> E3(("+"))
+        E3 --> SAT2["Voltage limit ± V_dc<br/>+ anti-windup"]
+    end
+
+    subgraph HW["LAUNCHXL-F28379D + test bench"]
+        PWM["PWM<br/>10 kHz"] --> MOT[["DC motor<br/>+ load"]]
+        MOT --> ENC["Encoder<br/>8192 counts/rev"]
+        ENC --> LPF["Low-pass filter<br/>τ_f = 2 ms"]
+    end
+
+    FF["Feedforward<br/>J·ω̇_d / k_m"] -.-> E2
+    SAT1 --> E2
+    SAT2 --> PWM
     MOT -- "i (shunt + ADC)" --> E2
-    MOT -- "θ (encoder)" --> LPF["Low-pass filter<br/>τ_f = 2 ms"]
     LPF -- "ω" --> E1
-    LPF -.-> BEMF
+    LPF -. "back-EMF k_m·ω" .-> E3
 ```
 
 Every saturation block has its own **anti-windup**: back-calculation for the PI loops, and a polynomial $F(z)$ scheme for the deadbeat and Dahlin controllers.
