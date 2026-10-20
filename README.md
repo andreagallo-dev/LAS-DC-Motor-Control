@@ -28,7 +28,7 @@
 ## Highlights
 
 - **Four controllers, one real motor**: cascade PI with feedforward, gain-scheduled PI on identified parameters, **Deadbeat** and **Dahlin**, all executed on a LAUNCHXL-F28379D at **10 kHz**.
-- **The datasheet was wrong**: least-squares identification found an armature inductance **≈ 50 % higher** than nominal (6.1 mH vs 4.1 mH). The model built on the estimated parameters overlaps the measured current transient almost exactly.
+- **The real motor differs from the datasheet**: least-squares identification found an armature inductance **≈ 50 % higher** than nominal (6.1 mH vs 4.1 mH). The model built on the estimated parameters overlaps the measured current transient almost exactly.
 - **Asymmetric friction**: the identification showed that viscous friction is **14.1 % higher** in one direction of rotation. It is modelled with a velocity-dependent PCHIP map $b(\omega)$ that drives gain scheduling of the speed PI.
 - **A deadbeat that actually works**: the unconstrained deadbeat asks for **±2700 V** with violent ringing. A custom polynomial anti-windup $F(z)$ makes it the **best performer** on the real motor, with the fastest rise, no overshoot and robustness to load.
 - **Steady-state ripple of ±4 rpm at 1000 rpm** (< 0.5 %), limited by encoder quantization and PWM ripple.
@@ -129,10 +129,12 @@ The time constant $\tau_f = 2$ ms was chosen experimentally. With $\tau_f = 20$ 
 
 Both PI controllers are tuned by **pole-zero cancellation**, so that each closed loop behaves like a first-order system. The speed loop is chosen 10× slower than the current loop:
 
-| Loop | Design rule | Target | Gains (nominal model) |
+| Loop | Design rule | Target | Gains (datasheet parameters) |
 | --- | --- | --- | --- |
 | Current | $T_{ii} = L_a/R_a,\quad K_{pi} = L_a/\tau_i$ | $\tau_i = 1$ ms | $T_{ii} = 1.28$ ms, $K_{pi} = 4.1$ |
-| Speed | $T_{i\omega} = J/b,\quad K_{p\omega} = J/(\tau_\omega k_m)$ | $\tau_\omega = 10$ ms | $T_{i\omega} = 85$ ms, $K_{p\omega} \approx 0.064$ |
+| Speed | $T_{i\omega} = \tau_m,\quad K_{p\omega} = J/(\tau_\omega k_m)$ | $\tau_\omega = 10$ ms | $T_{i\omega} = 85$ ms, $K_{p\omega} \approx 0.064$ |
+
+All values come from the motor datasheet: $L_a = 4.1$ mH, $R_a = 3.2$ Ω, $k_m = 0.11$ N·m/A, $J = 2 \times 3.52 \cdot 10^{-5}$ kg·m² (two coupled machines). The mechanical time constant $\tau_m = 85$ ms is the one stated on the datasheet. It is not computed as $J/b$. The PI was later re-tuned on the identified parameters (see [section 3](#3--least-squares-parameter-identification) and Section 4.7 of the report).
 
 Both controllers are discretized with **Tustin** and implemented in incremental form inside a MATLAB Function block. On saturation, the clamped output is stored as the controller state, which acts as the anti-windup:
 
@@ -171,7 +173,7 @@ Each subsystem is discretized with backward Euler into the regression form $y(k)
 | Equivalent inertia $J$ (2 coupled machines) | 7.04 × 10⁻⁵ kg·m² | **8.127 × 10⁻⁵ kg·m²** |
 | Viscous friction $b$ | 6.65 × 10⁻⁴ N·m·s/rad | **non-linear, asymmetric** $b(\omega)$ |
 
-Unidirectional tests at 20 V gave $b_{pos} = 9.62 \times 10^{-4}$ and $b_{neg} = 8.43 \times 10^{-4}$ N·m·s/rad, a **14.1 % asymmetry**. Swapping the motor terminals confirmed it is mechanical (wear) and not electrical. The steady-state points were interpolated with **PCHIP** into a 1-D lookup table. The table also schedules the integral time of the speed PI, $T_{i\omega}(\omega) = J/b(\omega)$.
+Unidirectional tests at 20 V gave $b_{pos} = 9.62 \times 10^{-4}$ and $b_{neg} = 8.43 \times 10^{-4}$ N·m·s/rad, a **14.1 % asymmetry**. Swapping the motor terminals confirmed it is mechanical (probably wear) and not electrical. The steady-state points were interpolated with **PCHIP** into a 1-D lookup table. The table also schedules the integral time of the speed PI, $T_{i\omega}(\omega) = J/b(\omega)$.
 
 <table>
 <tr>
@@ -215,7 +217,7 @@ The Dahlin controller relaxes the deadbeat specification. Instead of a pure dela
 D(z) = \frac{1}{G_p(z)}\;\frac{(1-e^{-T/\lambda})\,z^{-N-1}}{1 - e^{-T/\lambda} z^{-1} - (1-e^{-T/\lambda})\,z^{-N-1}}, \qquad N = 1
 ```
 
-$\lambda = 20$ ms was chosen as the trade-off between speed and control effort. The same $F(z)$ anti-windup structure is used. On the real motor, the measured 63 % rise time is **23 ms without anti-windup** and **29.7 ms with it**, close to the 20 ms design value. The extra 7 ms is the cost of bounded internal states.
+$\lambda = 20$ ms was chosen as the trade-off between speed and control effort. The same $F(z)$ anti-windup structure is used. On the real motor, the measured 63 % rise time is **23 ms without anti-windup**, close to the 20 ms design value, and **29.7 ms with it**. The extra ≈ 7 ms is the cost of keeping the controller states bounded during saturation.
 
 <table>
 <tr>
@@ -302,7 +304,7 @@ open_system('DahlinModel_Student')          % press Run
 
 1. `cd` into the module and run its parameter script. Set `comport` to the board's serial port.
 2. Open the **target model** (e.g. `Lez_11_basePerTracing.slx`) and click *Build, Deploy & Start* on the LaunchPad.
-3. Open **`CommandInterface.slx`** on the host and run it to send speed references and log data over serial.
+3. Open the host interface model, **`CommandInterface.slx`** (`Lez_6_CommandInterface.slx` in module 05), and run it to send speed references and log data over serial.
 
 | Module | Parameter script | Simulation model | Target model (board) |
 | --- | --- | --- | --- |
