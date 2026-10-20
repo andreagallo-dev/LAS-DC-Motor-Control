@@ -338,7 +338,7 @@ Every `results/` folder contains the raw `.mat` logs and a `plot_*.m` script tha
 </tr>
 </table>
 
-M.Sc. in Automation Engineering, **Alma Mater Studiorum, University of Bologna**.
+B.Sc. in Automation Engineering, **Alma Mater Studiorum, University of Bologna**.
 Developed for the course *Laboratory of Automation Systems* (A.Y. 2025/2026), held by Prof. Claudio Melchiorri and Prof. Davide Samorì.
 
 ## License
